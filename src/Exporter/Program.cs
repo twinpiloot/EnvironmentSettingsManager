@@ -50,7 +50,7 @@ namespace EnvironmentSettingsExporter
             Console.WriteLine();
             Console.ForegroundColor = defaultConsoleColor;
 
-            if (args.Length < 2 || args.Length > 3)
+            if (args.Length < 2 || args.Length > 4)
             {
                 PrintCommandLineHelp();
                 return -1;
@@ -58,14 +58,15 @@ namespace EnvironmentSettingsExporter
 
             string inputFile = args[0];
             string outputPath = args[1];
+            string inputFile2 = null;
 
             FormatType activeFormat = FormatType.XmlPreprocess;
 
             // Handle any additional command-line parameters
             if (args.Length > 2)
             {
-                // Still assuming a fixed location for the Format parameter
-                string formatParam = args[2]; // Any more and we'll need a command line parser
+                // Still assuming the Format parameter comes last
+                string formatParam = args[args.Length - 1]; // Any more and we'll need a command line parser
 
                 string[] formatParamSplit = formatParam.Split(':');
                 if (string.Compare(formatParamSplit[0], "/F", StringComparison.InvariantCultureIgnoreCase) == 0)
@@ -82,6 +83,11 @@ namespace EnvironmentSettingsExporter
                 }
             }
 
+            if (args.Length == 4 || (args.Length == 3 && !args[2].StartsWith("/F")))
+            {
+                inputFile2 = args[2];
+            }
+
             Console.WriteLine("Importing from " + Path.GetFileName(inputFile) + "...");
             Console.WriteLine();
 
@@ -89,6 +95,12 @@ namespace EnvironmentSettingsExporter
             {
                 // Open the source file and read the settings into a DataTable.
                 DataTable settingsTable = SettingsFileReader.ReadSettingsFromExcelFile(inputFile);
+
+                if (inputFile2 != null)
+                {
+                    Console.WriteLine("Importing from " + Path.GetFileName(inputFile2) + "...");
+                    settingsTable.Merge(SettingsFileReader.ReadSettingsFromExcelFile(inputFile2));
+                }
 
                 if (!Directory.Exists(outputPath))
                 {
@@ -150,7 +162,7 @@ namespace EnvironmentSettingsExporter
 
         private static void PrintCommandLineHelp()
         {
-            Console.WriteLine("Usage: EnvironmentSettingsExporter.exe <ExcelFile.xls/x or ExcelFile.xml> <OutputPath> [/F:<XmlPreprocess/AppSettings/WixCustomTable>]");
+            Console.WriteLine("Usage: EnvironmentSettingsExporter.exe <ExcelFile.xls/x or ExcelFile.xml> <OutputPath> [ExcelFile2.xls/x or ExcelFile2.xml] [/F:<XmlPreprocess/AppSettings/WixCustomTable>]");
         }
     }
 }
